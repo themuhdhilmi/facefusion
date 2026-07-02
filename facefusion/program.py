@@ -32,7 +32,8 @@ def create_config_path_program() -> ArgumentParser:
 				default = 'facefusion.ini'
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	apply_config_path(program)
@@ -52,7 +53,8 @@ def create_workflow_program() -> ArgumentParser:
 				choices = facefusion.choices.workflows
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -70,7 +72,8 @@ def create_temp_path_program() -> ArgumentParser:
 				default = config.get_str_value('paths', 'temp_path', tempfile.gettempdir())
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -88,7 +91,8 @@ def create_jobs_path_program() -> ArgumentParser:
 				default = config.get_str_value('paths', 'jobs_path', '.jobs')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -107,7 +111,8 @@ def create_source_paths_program() -> ArgumentParser:
 				nargs = '+'
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -125,7 +130,8 @@ def create_target_path_program() -> ArgumentParser:
 				default = config.get_str_value('paths', 'target_path')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -143,7 +149,8 @@ def create_output_path_program() -> ArgumentParser:
 				default = config.get_str_value('paths', 'output_path')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'paths' ]
 	)
 
 	return program
@@ -161,7 +168,8 @@ def create_source_pattern_program() -> ArgumentParser:
 				default = config.get_str_value('patterns', 'source_pattern')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'patterns' ]
 	)
 
 	return program
@@ -179,7 +187,8 @@ def create_target_pattern_program() -> ArgumentParser:
 				default = config.get_str_value('patterns', 'target_pattern')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'patterns' ]
 	)
 
 	return program
@@ -197,7 +206,8 @@ def create_output_pattern_program() -> ArgumentParser:
 				default = config.get_str_value('patterns', 'output_pattern')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'patterns' ]
 	)
 
 	return program
@@ -216,7 +226,8 @@ def create_face_detector_program() -> ArgumentParser:
 				choices = facefusion.choices.face_detector_models
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_detector' ]
 	)
 
 	known_args, _ = program.parse_known_args()
@@ -231,7 +242,8 @@ def create_face_detector_program() -> ArgumentParser:
 				choices = face_detector_size_choices
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_detector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -243,7 +255,8 @@ def create_face_detector_program() -> ArgumentParser:
 				nargs = '+'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_detector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -257,7 +270,8 @@ def create_face_detector_program() -> ArgumentParser:
 				metavar = 'FACE_DETECTOR_ANGLES'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_detector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -270,7 +284,8 @@ def create_face_detector_program() -> ArgumentParser:
 				metavar = create_float_metavar(facefusion.choices.face_detector_score_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_detector' ]
 	)
 
 	return program
@@ -289,7 +304,8 @@ def create_face_landmarker_program() -> ArgumentParser:
 				choices = facefusion.choices.face_landmarker_models
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_landmarker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -302,7 +318,8 @@ def create_face_landmarker_program() -> ArgumentParser:
 				metavar = create_float_metavar(facefusion.choices.face_landmarker_score_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_landmarker' ]
 	)
 
 	return program
@@ -321,7 +338,8 @@ def create_face_selector_program() -> ArgumentParser:
 				choices = facefusion.choices.face_selector_modes
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -332,7 +350,8 @@ def create_face_selector_program() -> ArgumentParser:
 				choices = facefusion.choices.face_selector_orders
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -345,7 +364,8 @@ def create_face_selector_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.face_selector_age_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -358,7 +378,8 @@ def create_face_selector_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.face_selector_age_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -369,7 +390,8 @@ def create_face_selector_program() -> ArgumentParser:
 				choices = facefusion.choices.face_selector_genders
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -380,7 +402,8 @@ def create_face_selector_program() -> ArgumentParser:
 				choices = facefusion.choices.face_selector_races
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -391,7 +414,8 @@ def create_face_selector_program() -> ArgumentParser:
 				default = config.get_int_value('face_selector', 'reference_face_position', '0')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -404,7 +428,8 @@ def create_face_selector_program() -> ArgumentParser:
 				metavar = create_float_metavar(facefusion.choices.reference_face_distance_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -415,7 +440,8 @@ def create_face_selector_program() -> ArgumentParser:
 				default = config.get_int_value('face_selector', 'reference_frame_number', '0')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_selector' ]
 	)
 
 	return program
@@ -436,7 +462,8 @@ def create_face_tracker_program() -> ArgumentParser:
 				metavar = create_float_metavar(facefusion.choices.face_tracker_score_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_tracker' ]
 	)
 
 	return program
@@ -455,7 +482,8 @@ def create_face_masker_program() -> ArgumentParser:
 				choices = facefusion.choices.face_occluder_models
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -466,7 +494,8 @@ def create_face_masker_program() -> ArgumentParser:
 				choices = facefusion.choices.face_parser_models
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -479,7 +508,8 @@ def create_face_masker_program() -> ArgumentParser:
 				metavar = 'FACE_MASK_TYPES'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -492,7 +522,8 @@ def create_face_masker_program() -> ArgumentParser:
 				metavar = 'FACE_MASK_AREAS'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -505,7 +536,8 @@ def create_face_masker_program() -> ArgumentParser:
 				metavar = 'FACE_MASK_REGIONS'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -518,7 +550,8 @@ def create_face_masker_program() -> ArgumentParser:
 				metavar = create_float_metavar(facefusion.choices.face_mask_blur_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -530,7 +563,8 @@ def create_face_masker_program() -> ArgumentParser:
 				nargs = '+'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'face_masker' ]
 	)
 
 	return program
@@ -549,7 +583,8 @@ def create_voice_extractor_program() -> ArgumentParser:
 				choices = facefusion.choices.voice_extractor_models
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'voice_extractor' ]
 	)
 
 	return program
@@ -568,7 +603,8 @@ def create_frame_extraction_program() -> ArgumentParser:
 				default = facefusion.config.get_int_value('frame_extraction', 'trim_frame_start')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'frame_extraction' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -579,7 +615,8 @@ def create_frame_extraction_program() -> ArgumentParser:
 				default = facefusion.config.get_int_value('frame_extraction', 'trim_frame_end')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'frame_extraction' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -590,7 +627,8 @@ def create_frame_extraction_program() -> ArgumentParser:
 				choices = facefusion.choices.temp_frame_formats
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'frame_extraction' ]
 	)
 
 	return program
@@ -611,7 +649,8 @@ def create_frame_distribution_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.target_frame_amount_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'frame_distribution' ]
 	)
 
 	return program
@@ -633,7 +672,8 @@ def create_output_creation_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.output_image_quality_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -645,7 +685,8 @@ def create_output_creation_program() -> ArgumentParser:
 				choices = facefusion.choices.output_image_scale_range
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -656,7 +697,8 @@ def create_output_creation_program() -> ArgumentParser:
 				choices = available_encoder_set.get('audio')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -669,7 +711,8 @@ def create_output_creation_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.output_audio_quality_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -682,7 +725,8 @@ def create_output_creation_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.output_audio_volume_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -693,7 +737,8 @@ def create_output_creation_program() -> ArgumentParser:
 				choices = available_encoder_set.get('video')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -704,7 +749,8 @@ def create_output_creation_program() -> ArgumentParser:
 				choices = facefusion.choices.video_presets
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -717,7 +763,8 @@ def create_output_creation_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.output_video_quality_range)
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -729,7 +776,8 @@ def create_output_creation_program() -> ArgumentParser:
 				choices = facefusion.choices.output_video_scale_range
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -740,7 +788,8 @@ def create_output_creation_program() -> ArgumentParser:
 				default = config.get_float_value('output_creation', 'output_video_fps')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -751,7 +800,8 @@ def create_output_creation_program() -> ArgumentParser:
 				default = config.get_float_value('output_creation', 'output_audio_fps', '25.0')
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'output_creation' ]
 	)
 
 	return program
@@ -772,7 +822,8 @@ def create_processors_program() -> ArgumentParser:
 				nargs = '+'
 			)
 		],
-		scopes = [ 'api', 'cli' ]
+		scopes = [ 'api', 'cli' ],
+		groups = [ 'processors' ]
 	)
 
 	for processor_module in get_processors_modules(available_processors):
@@ -796,7 +847,8 @@ def create_download_providers_program() -> ArgumentParser:
 				metavar = 'DOWNLOAD_PROVIDERS'
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'download' ]
 	)
 
 	return program
@@ -815,7 +867,8 @@ def create_download_scope_program() -> ArgumentParser:
 				choices = facefusion.choices.download_scopes
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'download' ]
 	)
 
 	return program
@@ -873,7 +926,8 @@ def create_api_program() -> ArgumentParser:
 				choices = facefusion.choices.api_security_strategies
 			)
 		],
-		scopes = [ 'api' ]
+		scopes = [ 'api' ],
+		groups = [ 'api' ]
 	)
 
 	return program
@@ -895,7 +949,8 @@ def create_execution_program() -> ArgumentParser:
 				metavar = 'EXECUTION_DEVICE_IDS'
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'execution' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -908,7 +963,8 @@ def create_execution_program() -> ArgumentParser:
 				metavar = 'EXECUTION_PROVIDERS'
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'execution' ]
 	)
 	capability_store.register_capability_set(
 		[
@@ -921,7 +977,8 @@ def create_execution_program() -> ArgumentParser:
 				metavar = create_int_metavar(facefusion.choices.execution_thread_count_range)
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'execution' ]
 	)
 
 	return program
@@ -940,7 +997,8 @@ def create_memory_program() -> ArgumentParser:
 				choices = facefusion.choices.video_memory_strategies
 			)
 		],
-		scopes = [ 'cli', 'sys' ]
+		scopes = [ 'cli', 'sys' ],
+		groups = [ 'memory' ]
 	)
 
 	return program
@@ -959,7 +1017,8 @@ def create_log_level_program() -> ArgumentParser:
 				choices = facefusion.choices.log_levels
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'misc' ]
 	)
 
 	return program
@@ -978,7 +1037,8 @@ def create_halt_on_error_program() -> ArgumentParser:
 				default = config.get_bool_value('misc', 'halt_on_error')
 			)
 		],
-		scopes = [ 'cli' ]
+		scopes = [ 'cli' ],
+		groups = [ 'misc' ]
 	)
 
 	return program
