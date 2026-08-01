@@ -6,6 +6,13 @@ from facefusion.types import Face, FaceStore, VisionFrame
 from facefusion.vision import is_vision_frame
 
 FACE_STORE : FaceStore = {}
+FACE_STORE_LIMIT = 1024
+FACE_STORE_LOCK = threading.Lock()
+
+
+def trim_faces() -> None:
+	while len(FACE_STORE) > FACE_STORE_LIMIT:
+		FACE_STORE.pop(next(iter(FACE_STORE)), None)
 
 
 def get_faces(vision_frame : VisionFrame) -> Optional[List[Face]]:
@@ -21,19 +28,24 @@ def get_faces(vision_frame : VisionFrame) -> Optional[List[Face]]:
 def set_faces(vision_frame : VisionFrame, faces : List[Face]) -> None:
 	if is_vision_frame(vision_frame):
 		vision_hash = create_hash(vision_frame.tobytes())
-		FACE_STORE.setdefault(vision_hash,
-		{
-			'lock': threading.Lock()
-		})['faces'] = faces
+
+		with FACE_STORE_LOCK:
+			FACE_STORE.setdefault(vision_hash,
+			{
+				'lock': threading.Lock()
+			})['faces'] = faces
+			trim_faces()
 
 
 def resolve_lock(vision_frame : VisionFrame) -> threading.Lock:
 	if is_vision_frame(vision_frame):
 		vision_hash = create_hash(vision_frame.tobytes())
-		return FACE_STORE.setdefault(vision_hash,
-		{
-			'lock': threading.Lock()
-		}).get('lock')
+
+		with FACE_STORE_LOCK:
+			return FACE_STORE.setdefault(vision_hash,
+			{
+				'lock': threading.Lock()
+			}).get('lock')
 	return threading.Lock()
 
 

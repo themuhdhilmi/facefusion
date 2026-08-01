@@ -1,7 +1,7 @@
 import os
 import subprocess
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Deque, Iterator, List
 
 import cv2
@@ -20,24 +20,27 @@ from facefusion.vision import extract_vision_mask, is_vision_frame, read_static_
 def multi_process_capture(camera_capture : cv2.VideoCapture, camera_fps : Fps) -> Iterator[VisionFrame]:
 	capture_deque : Deque[VisionFrame] = deque()
 	source_vision_frames = read_static_images(state_manager.get_item('source_paths'))
+	execution_thread_count = state_manager.get_item('execution_thread_count')
 
 	with tqdm(desc = translator.get('streaming'), unit = 'frame', disable = state_manager.get_item('log_level') in [ 'warn', 'error' ]) as progress:
-		with ThreadPoolExecutor(max_workers = state_manager.get_item('execution_thread_count')) as executor:
-			futures = []
+		with ThreadPoolExecutor(max_workers = execution_thread_count) as executor:
+			futures : Deque[Future[VisionFrame]] = deque()
 
 			while camera_capture and camera_capture.isOpened():
-				_, capture_vision_frame = camera_capture.read()
-				if analyse_stream(capture_vision_frame, camera_fps):
-					camera_capture.release()
+				has_vision_frame, capture_vision_frame = camera_capture.read()
 
-				if is_vision_frame(capture_vision_frame):
-					future = executor.submit(process_stream_frame, source_vision_frames, capture_vision_frame)
-					futures.append(future)
+				if has_vision_frame and is_vision_frame(capture_vision_frame):
+					if analyse_stream(capture_vision_frame, camera_fps):
+						logger.warn(translator.get('stream_stopped_by_analyser'), __name__)
+						camera_capture.release()
+					else:
+						futures.append(executor.submit(process_stream_frame, source_vision_frames, capture_vision_frame))
 
-				for future_done in [ future for future in futures if future.done() ]:
-					capture_vision_frame = future_done.result()
-					capture_deque.append(capture_vision_frame)
-					futures.remove(future_done)
+				while len(futures) > execution_thread_count:
+					capture_deque.append(futures.popleft().result())
+
+				while futures and futures[0].done():
+					capture_deque.append(futures.popleft().result())
 
 				while capture_deque:
 					progress.update()
@@ -51,19 +54,22 @@ def process_stream_frame(source_vision_frames : List[VisionFrame], target_vision
 	temp_vision_mask = extract_vision_mask(temp_vision_frame)
 
 	for processor_module in get_processors_modules(state_manager.get_item('processors')):
-		logger.disable()
-		if processor_module.pre_process('stream'):
-			logger.enable()
-			temp_vision_frame, temp_vision_mask = processor_module.process_frame(
-			{
-				'source_vision_frames': source_vision_frames,
-				'source_audio_frame': source_audio_frame,
-				'source_voice_frame': source_voice_frame,
-				'target_vision_frames': [ target_vision_frame ],
-				'temp_vision_frame': temp_vision_frame,
-				'temp_vision_mask': temp_vision_mask
-			})
-		logger.enable()
+		try:
+			with logger.suppress():
+				is_pre_processed = processor_module.pre_process('stream')
+
+			if is_pre_processed:
+				temp_vision_frame, temp_vision_mask = processor_module.process_frame(
+				{
+					'source_vision_frames': source_vision_frames,
+					'source_audio_frame': source_audio_frame,
+					'source_voice_frame': source_voice_frame,
+					'target_vision_frames': [ target_vision_frame ],
+					'temp_vision_frame': temp_vision_frame,
+					'temp_vision_mask': temp_vision_mask
+				})
+		except Exception as exception:
+			logger.warn(translator.get('stream_frame_not_processed').format(error = exception), __name__)
 
 	return temp_vision_frame
 

@@ -1,8 +1,13 @@
+import threading
+from contextlib import contextmanager
 from logging import Logger, basicConfig, getLogger
+from typing import Iterator
 
 import facefusion.choices
 from facefusion.common_helper import get_first, get_last
 from facefusion.types import LogLevel
+
+LOGGER_LOCK = threading.RLock()
 
 
 def init(log_level : LogLevel) -> None:
@@ -15,19 +20,23 @@ def get_package_logger() -> Logger:
 
 
 def debug(message : str, module_name : str) -> None:
-	get_package_logger().debug(create_message(message, module_name))
+	with LOGGER_LOCK:
+		get_package_logger().debug(create_message(message, module_name))
 
 
 def info(message : str, module_name : str) -> None:
-	get_package_logger().info(create_message(message, module_name))
+	with LOGGER_LOCK:
+		get_package_logger().info(create_message(message, module_name))
 
 
 def warn(message : str, module_name : str) -> None:
-	get_package_logger().warning(create_message(message, module_name))
+	with LOGGER_LOCK:
+		get_package_logger().warning(create_message(message, module_name))
 
 
 def error(message : str, module_name : str) -> None:
-	get_package_logger().error(create_message(message, module_name))
+	with LOGGER_LOCK:
+		get_package_logger().error(create_message(message, module_name))
 
 
 def create_message(message : str, module_name : str) -> str:
@@ -46,3 +55,16 @@ def enable() -> None:
 
 def disable() -> None:
 	get_package_logger().disabled = True
+
+
+@contextmanager
+def suppress() -> Iterator[None]:
+	with LOGGER_LOCK:
+		package_logger = get_package_logger()
+		is_disabled = package_logger.disabled
+		package_logger.disabled = True
+
+		try:
+			yield
+		finally:
+			package_logger.disabled = is_disabled

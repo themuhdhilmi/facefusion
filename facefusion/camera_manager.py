@@ -12,6 +12,11 @@ CAMERA_POOL_SET : CameraPoolSet =\
 
 def get_local_camera_capture(camera_id : int) -> cv2.VideoCapture:
 	camera_key = str(camera_id)
+	camera_capture = CAMERA_POOL_SET.get('capture').get(camera_key)
+
+	if camera_capture and not camera_capture.isOpened():
+		camera_capture.release()
+		del CAMERA_POOL_SET['capture'][camera_key]
 
 	if camera_key not in CAMERA_POOL_SET.get('capture'):
 		camera_capture = cv2.VideoCapture(camera_id)
@@ -44,10 +49,11 @@ def detect_local_camera_ids(id_start : int, id_end : int) -> List[int]:
 
 	for camera_id in range(id_start, id_end):
 		cv2.utils.logging.setLogLevel(0)
-		camera_capture = get_local_camera_capture(camera_id)
+		camera_capture = cv2.VideoCapture(camera_id)
 		cv2.utils.logging.setLogLevel(3)
 
-		if camera_capture and camera_capture.isOpened():
+		if camera_capture.isOpened():
 			local_camera_ids.append(camera_id)
+		camera_capture.release()
 
 	return local_camera_ids

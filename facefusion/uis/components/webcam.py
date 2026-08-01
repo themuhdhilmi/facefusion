@@ -2,6 +2,7 @@ from typing import Iterator, List, Optional, Tuple
 
 import cv2
 import gradio
+import numpy
 
 from facefusion import state_manager, translator
 from facefusion.camera_manager import clear_camera_pool, get_local_camera_capture
@@ -94,9 +95,11 @@ def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : 
 	webcam_width, webcam_height = unpack_resolution(webcam_resolution)
 
 	if camera_capture and camera_capture.isOpened():
+		camera_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 		camera_capture.set(cv2.CAP_PROP_FRAME_WIDTH, webcam_width)
 		camera_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, webcam_height)
 		camera_capture.set(cv2.CAP_PROP_FPS, webcam_fps)
+		camera_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 		for capture_vision_frame in multi_process_capture(camera_capture, webcam_fps):
 			capture_vision_frame = cv2.cvtColor(capture_vision_frame, cv2.COLOR_BGR2RGB)
@@ -106,7 +109,7 @@ def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : 
 				yield capture_vision_frame
 			if webcam_mode in [ 'udp', 'v4l2' ]:
 				try:
-					stream.stdin.write(capture_vision_frame.data)
+					stream.stdin.write(numpy.ascontiguousarray(capture_vision_frame).data)
 				except Exception:
 					pass
 
