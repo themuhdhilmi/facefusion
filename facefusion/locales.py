@@ -271,6 +271,8 @@ LOCALES : Locales =\
 			'webcam_fps_slider': 'WEBCAM FPS',
 			'webcam_image': 'WEBCAM',
 			'webcam_device_id_dropdown': 'WEBCAM DEVICE ID',
+			'webcam_freeze_on_face_loss_checkbox': 'FREEZE ON FACE LOSS',
+			'webcam_freeze_recovery_slider': 'FREEZE RECOVERY DELAY',
 			'webcam_mode_radio': 'WEBCAM MODE',
 			'webcam_resolution_dropdown': 'WEBCAM RESOLUTION'
 		}

@@ -12,6 +12,8 @@ WEBCAM_DEVICE_ID_DROPDOWN : Optional[gradio.Dropdown] = None
 WEBCAM_MODE_RADIO : Optional[gradio.Radio] = None
 WEBCAM_RESOLUTION_DROPDOWN : Optional[gradio.Dropdown] = None
 WEBCAM_FPS_SLIDER : Optional[gradio.Slider] = None
+WEBCAM_FREEZE_ON_FACE_LOSS_CHECKBOX : Optional[gradio.Checkbox] = None
+WEBCAM_FREEZE_RECOVERY_SLIDER : Optional[gradio.Slider] = None
 
 
 def render() -> None:
@@ -19,6 +21,8 @@ def render() -> None:
 	global WEBCAM_MODE_RADIO
 	global WEBCAM_RESOLUTION_DROPDOWN
 	global WEBCAM_FPS_SLIDER
+	global WEBCAM_FREEZE_ON_FACE_LOSS_CHECKBOX
+	global WEBCAM_FREEZE_RECOVERY_SLIDER
 
 	local_camera_ids = detect_local_camera_ids(0, 10) or [ 'none' ] #type:ignore[list-item]
 	WEBCAM_DEVICE_ID_DROPDOWN = gradio.Dropdown(
@@ -43,6 +47,19 @@ def render() -> None:
 		minimum = 1,
 		maximum = 30
 	)
+	WEBCAM_FREEZE_ON_FACE_LOSS_CHECKBOX = gradio.Checkbox(
+		label = translator.get('uis.webcam_freeze_on_face_loss_checkbox'),
+		value = False
+	)
+	WEBCAM_FREEZE_RECOVERY_SLIDER = gradio.Slider(
+		label = translator.get('uis.webcam_freeze_recovery_slider'),
+		value = 0.5,
+		step = 0.1,
+		minimum = 0,
+		maximum = 3
+	)
+	register_ui_component('webcam_freeze_on_face_loss_checkbox', WEBCAM_FREEZE_ON_FACE_LOSS_CHECKBOX)
+	register_ui_component('webcam_freeze_recovery_slider', WEBCAM_FREEZE_RECOVERY_SLIDER)
 	register_ui_component('webcam_device_id_dropdown', WEBCAM_DEVICE_ID_DROPDOWN)
 	register_ui_component('webcam_mode_radio', WEBCAM_MODE_RADIO)
 	register_ui_component('webcam_resolution_dropdown', WEBCAM_RESOLUTION_DROPDOWN)

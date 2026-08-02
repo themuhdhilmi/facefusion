@@ -54,10 +54,12 @@ def listen() -> None:
 	webcam_mode_radio = get_ui_component('webcam_mode_radio')
 	webcam_resolution_dropdown = get_ui_component('webcam_resolution_dropdown')
 	webcam_fps_slider = get_ui_component('webcam_fps_slider')
+	webcam_freeze_on_face_loss_checkbox = get_ui_component('webcam_freeze_on_face_loss_checkbox')
+	webcam_freeze_recovery_slider = get_ui_component('webcam_freeze_recovery_slider')
 
-	if webcam_device_id_dropdown and webcam_mode_radio and webcam_resolution_dropdown and webcam_fps_slider:
+	if webcam_device_id_dropdown and webcam_mode_radio and webcam_resolution_dropdown and webcam_fps_slider and webcam_freeze_on_face_loss_checkbox and webcam_freeze_recovery_slider:
 		WEBCAM_START_BUTTON.click(pre_start, outputs = [ SOURCE_FILE, WEBCAM_IMAGE, WEBCAM_START_BUTTON, WEBCAM_STOP_BUTTON ])
-		start_event = WEBCAM_START_BUTTON.click(start, inputs = [ webcam_device_id_dropdown, webcam_mode_radio, webcam_resolution_dropdown, webcam_fps_slider ], outputs = WEBCAM_IMAGE)
+		start_event = WEBCAM_START_BUTTON.click(start, inputs = [ webcam_device_id_dropdown, webcam_mode_radio, webcam_resolution_dropdown, webcam_fps_slider, webcam_freeze_on_face_loss_checkbox, webcam_freeze_recovery_slider ], outputs = WEBCAM_IMAGE)
 		start_event.then(pre_stop)
 		WEBCAM_STOP_BUTTON.click(stop, cancels = start_event, outputs = WEBCAM_IMAGE)
 		WEBCAM_STOP_BUTTON.click(pre_stop, outputs = [ SOURCE_FILE, WEBCAM_IMAGE, WEBCAM_START_BUTTON, WEBCAM_STOP_BUTTON ])
@@ -83,7 +85,7 @@ def pre_stop() -> Tuple[gradio.File, gradio.Image, gradio.Button, gradio.Button]
 	return gradio.File(visible = True), gradio.Image(visible = False), gradio.Button(visible = True), gradio.Button(visible = False)
 
 
-def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : str, webcam_fps : Fps) -> Iterator[VisionFrame]:
+def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : str, webcam_fps : Fps, webcam_freeze_on_face_loss : bool = False, webcam_freeze_recovery_delay : float = 0.5) -> Iterator[VisionFrame]:
 	state_manager.init_item('face_selector_mode', 'one')
 	state_manager.sync_state()
 
@@ -101,7 +103,7 @@ def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : 
 		camera_capture.set(cv2.CAP_PROP_FPS, webcam_fps)
 		camera_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-		for capture_vision_frame in multi_process_capture(camera_capture, webcam_fps):
+		for capture_vision_frame in multi_process_capture(camera_capture, webcam_fps, webcam_freeze_on_face_loss, webcam_freeze_recovery_delay):
 			capture_vision_frame = cv2.cvtColor(capture_vision_frame, cv2.COLOR_BGR2RGB)
 			capture_vision_frame = fit_cover_frame(capture_vision_frame, (webcam_width, webcam_height))
 

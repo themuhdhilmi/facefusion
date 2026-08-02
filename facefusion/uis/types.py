@@ -90,6 +90,8 @@ ComponentName = Literal\
 	'ui_workflow_dropdown',
 	'webcam_device_id_dropdown',
 	'webcam_fps_slider',
+	'webcam_freeze_on_face_loss_checkbox',
+	'webcam_freeze_recovery_slider',
 	'webcam_mode_radio',
 	'webcam_resolution_dropdown'
 ]
