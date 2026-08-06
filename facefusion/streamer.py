@@ -2,14 +2,14 @@ import os
 import subprocess
 from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Deque, Iterator, List, Tuple
+from typing import Deque, Iterator, List, Optional, Tuple
 
 import cv2
 from tqdm import tqdm
 
 from facefusion import ffmpeg_builder, logger, state_manager, translator
 from facefusion.audio import create_empty_audio_frame
-from facefusion.content_analyser import analyse_stream
+from facefusion.content_analyser import analyse_stream, get_inference_pool as get_content_analyser_pool
 from facefusion.face_creator import get_static_faces
 from facefusion.ffmpeg import open_ffmpeg
 from facefusion.filesystem import is_directory
@@ -24,8 +24,12 @@ def multi_process_capture(camera_capture : cv2.VideoCapture, camera_fps : Fps, f
 	execution_thread_count = state_manager.get_item('execution_thread_count')
 	recovery_frame_total = max(1, int(round(freeze_recovery_delay * camera_fps)))
 	recovery_frame_count = 0
+	capture_failure_total = max(1, int(round(camera_fps * 2)))
+	capture_failure_count = 0
 	freeze_vision_frame = None
 	is_frozen = False
+
+	get_content_analyser_pool()
 
 	with tqdm(desc = translator.get('streaming'), unit = 'frame', disable = state_manager.get_item('log_level') in [ 'warn', 'error' ]) as progress:
 		with ThreadPoolExecutor(max_workers = execution_thread_count) as executor:
@@ -35,14 +39,23 @@ def multi_process_capture(camera_capture : cv2.VideoCapture, camera_fps : Fps, f
 				is_capturing = bool(camera_capture and camera_capture.isOpened())
 
 				if is_capturing:
-					has_vision_frame, capture_vision_frame = camera_capture.read()
+					has_vision_frame, capture_vision_frame = read_camera_frame(camera_capture)
 
 					if has_vision_frame and is_vision_frame(capture_vision_frame):
-						if analyse_stream(capture_vision_frame, camera_fps):
+						capture_failure_count = 0
+
+						if analyse_stream_frame(capture_vision_frame, camera_fps):
 							logger.warn(translator.get('stream_stopped_by_analyser'), __name__)
 							camera_capture.release()
 						else:
 							futures.append(executor.submit(process_stream_frame, source_vision_frames, capture_vision_frame, freeze_on_face_loss))
+
+					else:
+						capture_failure_count = capture_failure_count + 1
+
+						if capture_failure_count >= capture_failure_total:
+							logger.error(translator.get('stream_stopped_by_camera'), __name__)
+							camera_capture.release()
 
 				while futures and (not is_capturing or len(futures) > execution_thread_count or futures[0].done()):
 					capture_deque.append(futures.popleft().result())
@@ -69,6 +82,22 @@ def multi_process_capture(camera_capture : cv2.VideoCapture, camera_fps : Fps, f
 						is_frozen = False
 						freeze_vision_frame = capture_vision_frame
 						yield capture_vision_frame
+
+
+def read_camera_frame(camera_capture : cv2.VideoCapture) -> Tuple[bool, Optional[VisionFrame]]:
+	try:
+		return camera_capture.read()
+	except cv2.error as exception:
+		logger.debug(translator.get('stream_frame_not_captured').format(error = exception), __name__)
+		return False, None
+
+
+def analyse_stream_frame(capture_vision_frame : VisionFrame, camera_fps : Fps) -> bool:
+	try:
+		return analyse_stream(capture_vision_frame, camera_fps)
+	except Exception as exception:
+		logger.warn(translator.get('stream_frame_not_analysed').format(error = exception), __name__)
+		return False
 
 
 def process_stream_frame(source_vision_frames : List[VisionFrame], target_vision_frame : VisionFrame, detect_target_face : bool = False) -> Tuple[VisionFrame, bool]:

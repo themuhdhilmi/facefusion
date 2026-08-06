@@ -1,0 +1,1 @@
+./run.sh run --ui-layouts webcam   --execution-thread-count 2   --processors face_swapper   --face-swapper-model inswapper_128_fp16   --face-swapper-pixel-boost 128x128

@@ -52,8 +52,15 @@ def detect_local_camera_ids(id_start : int, id_end : int) -> List[int]:
 		camera_capture = cv2.VideoCapture(camera_id)
 		cv2.utils.logging.setLogLevel(3)
 
-		if camera_capture.isOpened():
+		if camera_capture.isOpened() and has_camera_capture_stream(camera_capture):
 			local_camera_ids.append(camera_id)
 		camera_capture.release()
 
 	return local_camera_ids
+
+
+def has_camera_capture_stream(camera_capture : cv2.VideoCapture) -> bool:
+	camera_width = camera_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+	camera_height = camera_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+	return camera_width > 0 and camera_height > 0
