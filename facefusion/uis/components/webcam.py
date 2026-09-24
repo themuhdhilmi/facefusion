@@ -2,15 +2,15 @@ from typing import Iterator, List, Optional, Tuple
 
 import cv2
 import gradio
-import numpy
 
 from facefusion import state_manager, translator
 from facefusion.camera_manager import clear_camera_pool, get_local_camera_capture
 from facefusion.filesystem import has_image
-from facefusion.streamer import multi_process_capture, open_stream
+from facefusion.streamer import close_stream, multi_process_capture, open_stream, write_stream_frame
 from facefusion.types import Fps, VisionFrame, WebcamMode
 from facefusion.uis.core import get_ui_component
 from facefusion.uis.types import File
+from facefusion.virtual_camera import idle_virtual_camera, open_virtual_camera, write_virtual_camera_frame
 from facefusion.vision import fit_cover_frame, unpack_resolution
 
 SOURCE_FILE : Optional[gradio.File] = None
@@ -91,9 +91,12 @@ def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : 
 
 	camera_capture = get_local_camera_capture(webcam_device_id)
 	stream = None
+	has_virtual_camera = False
 
-	if webcam_mode in [ 'udp', 'v4l2' ]:
-		stream = open_stream(webcam_mode, webcam_resolution, webcam_fps) #type:ignore[arg-type]
+	if webcam_mode == 'udp':
+		stream = open_stream(webcam_mode, webcam_resolution, webcam_fps)
+	if webcam_mode == 'v4l2':
+		has_virtual_camera = open_virtual_camera(webcam_resolution, webcam_fps)
 	webcam_width, webcam_height = unpack_resolution(webcam_resolution)
 
 	if camera_capture and camera_capture.isOpened():
@@ -103,17 +106,20 @@ def start(webcam_device_id : int, webcam_mode : WebcamMode, webcam_resolution : 
 		camera_capture.set(cv2.CAP_PROP_FPS, webcam_fps)
 		camera_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-		for capture_vision_frame in multi_process_capture(camera_capture, webcam_fps, webcam_freeze_on_face_loss, webcam_freeze_recovery_delay):
-			capture_vision_frame = cv2.cvtColor(capture_vision_frame, cv2.COLOR_BGR2RGB)
-			capture_vision_frame = fit_cover_frame(capture_vision_frame, (webcam_width, webcam_height))
+		try:
+			for capture_vision_frame in multi_process_capture(camera_capture, webcam_fps, webcam_freeze_on_face_loss, webcam_freeze_recovery_delay):
+				capture_vision_frame = cv2.cvtColor(capture_vision_frame, cv2.COLOR_BGR2RGB)
+				capture_vision_frame = fit_cover_frame(capture_vision_frame, (webcam_width, webcam_height))
 
-			if webcam_mode == 'inline':
+				if stream and not write_stream_frame(stream, 'udp', capture_vision_frame):
+					close_stream(stream)
+					stream = None
+				if has_virtual_camera:
+					has_virtual_camera = write_virtual_camera_frame(capture_vision_frame)
 				yield capture_vision_frame
-			if webcam_mode in [ 'udp', 'v4l2' ]:
-				try:
-					stream.stdin.write(numpy.ascontiguousarray(capture_vision_frame).data)
-				except Exception:
-					pass
+		finally:
+			close_stream(stream)
+			idle_virtual_camera()
 
 
 def stop() -> gradio.Image:

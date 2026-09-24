@@ -33,12 +33,12 @@ def render() -> None:
 	WEBCAM_MODE_RADIO = gradio.Radio(
 		label = translator.get('uis.webcam_mode_radio'),
 		choices = uis_choices.webcam_modes,
-		value = uis_choices.webcam_modes[0]
+		value = 'v4l2'
 	)
 	WEBCAM_RESOLUTION_DROPDOWN = gradio.Dropdown(
 		label = translator.get('uis.webcam_resolution_dropdown'),
 		choices = uis_choices.webcam_resolutions,
-		value = uis_choices.webcam_resolutions[0]
+		value = '1920x1080'
 	)
 	WEBCAM_FPS_SLIDER = gradio.Slider(
 		label = translator.get('uis.webcam_fps_slider'),
@@ -49,7 +49,7 @@ def render() -> None:
 	)
 	WEBCAM_FREEZE_ON_FACE_LOSS_CHECKBOX = gradio.Checkbox(
 		label = translator.get('uis.webcam_freeze_on_face_loss_checkbox'),
-		value = False
+		value = True
 	)
 	WEBCAM_FREEZE_RECOVERY_SLIDER = gradio.Slider(
 		label = translator.get('uis.webcam_freeze_recovery_slider'),

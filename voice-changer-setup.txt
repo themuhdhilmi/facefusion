@@ -1,0 +1,104 @@
+Voice changer - two options
+===========================
+
+A) REALISTIC (neural, RVC, uses the GPU)         -> microphone "VoiceChanger_Mic"
+B) LIGHT (EasyEffects pitch shift, no GPU)       -> microphone "EasyEffects Source"
+
+Both can run at the same time. Pick the microphone in OBS / Discord accordingly.
+
+
+A) Realistic: VCClient (RVC) on the GPU, next to FaceFusion
+============================================================
+Start / stop (from the repo folder):
+
+cd VCClient && ./start.sh        # starts server, reads your Maono mic, converts on GPU,
+                                 # output goes to VoiceChanger_Mic. Takes ~40 s.
+./stop.sh                        # stop
+
+Nothing else to click. No browser needed. Delay is about 0.4 s.
+Measured with FaceFusion running: 95 ms per 0.17 s chunk, VRAM 6.2 GB of 8 GB.
+
+Hear yourself in headphones:
+./vc-audio.sh monitor on
+./vc-audio.sh monitor off
+
+Status / on / off without restarting:
+./vc-audio.sh status
+./vc-audio.sh off
+./vc-audio.sh on
+
+Change the voice (model, tune) in the web UI: http://127.0.0.1:18888
+  - left column: pick a model slot (4 female voices are installed)
+  - TUNE: pitch offset in semitones. 12 = typical male -> female, 15 = higher.
+    Set once per model; it is remembered.
+  - Don't touch the "server device" section, start.sh / vc-audio.sh manage it.
+
+If the voice stutters (FaceFusion under heavy load): edit VC_CHUNK in vc-audio.sh
+from 64 to 96 (adds ~0.1 s delay), then ./vc-audio.sh on.
+If VCClient logs "out of memory": stop FaceFusion, restart VCClient, or use option B.
+
+Where things live:
+  VCClient/start.sh      launcher (sets CUDA libs, mic routing, enables server audio)
+  VCClient/vc-audio.sh   on/off/monitor/status helper
+  VCClient/README-SETUP.md  full install notes
+
+
+B) Light: EasyEffects pitch shift, no GPU
+=========================================
+
+What runs: EasyEffects (Flatpak, user install) with the input preset "female"
+(+5 semitones on the microphone). It starts hidden at login and exposes a
+virtual microphone called "EasyEffects Source".
+
+Pick the microphone in your apps
+--------------------------------
+OBS      : Audio Input Capture source -> device "EasyEffects Source"
+           (currently it points at VoiceChanger_Mic, change it)
+Discord  : Settings -> Voice -> Input Device -> EasyEffects Source
+Browser  : site microphone permission -> EasyEffects Source
+
+The "female" preset chain (Input tab, top to bottom)
+----------------------------------------------------
+1. RNNoise     removes room noise BEFORE the pitch shift (shifted noise sounds odd)
+2. Pitch       +4 semitones (natural). +5 stronger, +7 cartoon. Try 3..6.
+3. Equalizer   high-pass 100 Hz, -4 dB at 250 Hz (less chest), +3 dB at 3 kHz
+               (brightness), +2 dB shelf above 8 kHz (air)
+4. Compressor  -18 dB threshold, 3:1, +3 dB makeup: evens out loudness
+
+Making it more natural, in order of impact
+------------------------------------------
+- Speak softer and a bit higher yourself; the shifter only needs to add 3..4
+  semitones then, and small shifts sound far more real than big ones.
+- Pitch: keep semitones at 3..5. Every semitone above that adds "chipmunk".
+- Equalizer: if it sounds nasal, lower the 3 kHz bell to +1..+2.
+  If it sounds thin, reduce the 250 Hz cut to -2. If boomy, raise the high-pass to 130 Hz.
+- Pitch -> Sequence length 25..30 and Seek window 10..12 reduce warble on speech;
+  Overlap length 6..8. Quick seek must stay OFF, Anti-alias ON.
+- RNNoise: if your breaths or word endings get cut, raise "Release" to 50..100 ms.
+- Keep the mic close (10 cm) so the noise remover has little to do.
+- The remaining "artificial" quality is what a plain pitch shifter cannot fix:
+  it does not change the vocal tract (formants). Only the neural RVC in
+  VCClient does that, and it needs the GPU that FaceFusion is using.
+
+Presets: "female" = full chain, "female_simple" = pitch only (+5). Load with
+flatpak run com.github.wwmm.easyeffects -l female_simple
+
+Hear yourself (monitor the changed voice in your headphones)
+-----------------------------------------------------------
+pactl load-module module-loopback source=easyeffects_source latency_msec=40   # on
+pactl unload-module module-loopback                                            # off
+Goes to the default output (Maono headphone jack). Unload it before switching
+the default output to speakers, or you get feedback.
+Alternative: EasyEffects window -> Input tab -> headphone icon "Listen".
+
+Handy commands
+--------------
+flatpak run com.github.wwmm.easyeffects -b 1     # bypass (your real voice)
+flatpak run com.github.wwmm.easyeffects -b 2     # effect back on
+flatpak run com.github.wwmm.easyeffects -l female  # reload the preset
+flatpak run com.github.wwmm.easyeffects -q       # stop the service
+flatpak run com.github.wwmm.easyeffects -w       # start it hidden again
+
+Preset file: ~/.var/app/com.github.wwmm.easyeffects/data/easyeffects/input/female.json  (female_simple.json = pitch only)
+Autostart  : ~/.config/autostart/com.github.wwmm.easyeffects.desktop
+

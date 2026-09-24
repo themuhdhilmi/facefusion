@@ -1,10 +1,10 @@
-import os
 import subprocess
 from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Deque, Iterator, List, Optional, Tuple
 
 import cv2
+import numpy
 from tqdm import tqdm
 
 from facefusion import ffmpeg_builder, logger, state_manager, translator
@@ -12,7 +12,6 @@ from facefusion.audio import create_empty_audio_frame
 from facefusion.content_analyser import analyse_stream, get_inference_pool as get_content_analyser_pool
 from facefusion.face_creator import get_static_faces
 from facefusion.ffmpeg import open_ffmpeg
-from facefusion.filesystem import is_directory
 from facefusion.processors.core import get_processors_modules
 from facefusion.types import Fps, StreamMode, VisionFrame
 from facefusion.vision import extract_vision_mask, is_vision_frame, read_static_images
@@ -129,7 +128,7 @@ def process_stream_frame(source_vision_frames : List[VisionFrame], target_vision
 	return temp_vision_frame, has_target_face
 
 
-def open_stream(stream_mode : StreamMode, stream_resolution : str, stream_fps : Fps) -> subprocess.Popen[bytes]:
+def open_stream(stream_mode : StreamMode, stream_resolution : str, stream_fps : Fps) -> Optional[subprocess.Popen[bytes]]:
 	commands = ffmpeg_builder.chain(
 		ffmpeg_builder.capture_video(),
 		ffmpeg_builder.set_media_resolution(stream_resolution),
@@ -141,20 +140,30 @@ def open_stream(stream_mode : StreamMode, stream_resolution : str, stream_fps : 
 		commands.extend(ffmpeg_builder.set_stream_mode('udp'))
 		commands.extend(ffmpeg_builder.set_stream_quality(2000))
 		commands.extend(ffmpeg_builder.set_output('udp://localhost:27000?pkt_size=1316'))
+		return open_ffmpeg(commands)
 
-	if stream_mode == 'v4l2':
-		device_directory_path = '/sys/devices/virtual/video4linux'
-		commands.extend(ffmpeg_builder.set_input('-'))
-		commands.extend(ffmpeg_builder.set_stream_mode('v4l2'))
+	return None
 
-		if is_directory(device_directory_path):
-			device_names = os.listdir(device_directory_path)
 
-			for device_name in device_names:
-				device_path = '/dev/' + device_name
-				commands.extend(ffmpeg_builder.set_output(device_path))
+def write_stream_frame(stream : subprocess.Popen[bytes], stream_mode : StreamMode, vision_frame : VisionFrame) -> bool:
+	if stream.poll() is not None:
+		logger.error(translator.get('stream_closed').format(stream_mode = stream_mode, return_code = stream.returncode), __name__)
+		return False
 
-		else:
-			logger.error(translator.get('stream_not_loaded').format(stream_mode = stream_mode), __name__)
+	try:
+		stream.stdin.write(numpy.ascontiguousarray(vision_frame).data)
+		return True
+	except (BrokenPipeError, OSError, ValueError) as exception:
+		logger.error(translator.get('stream_frame_not_written').format(error = exception), __name__)
+		return False
 
-	return open_ffmpeg(commands)
+
+def close_stream(stream : Optional[subprocess.Popen[bytes]]) -> None:
+	if stream:
+		try:
+			if stream.stdin:
+				stream.stdin.close()
+			stream.terminate()
+			stream.wait(timeout = 2)
+		except Exception:
+			stream.kill()

@@ -1,0 +1,36 @@
+FaceFusion virtual camera setup (OBS source "FaceFusion Camera")
+================================================================
+
+Do these in order. The device must be fully released once.
+
+1. In OBS: remove the "FaceFusion Camera" source (or close OBS).
+2. Stop FaceFusion completely.
+3. Install and start the format holder service (asks for your sudo password):
+
+sudo cp /tmp/claude-1000/-home-gtm-personal-Documents-repo-facefusion/d9710bfa-944c-4fca-8848-67903fe24881/scratchpad/facefusion-camera-format /usr/local/bin/facefusion-camera-format
+sudo cp /tmp/claude-1000/-home-gtm-personal-Documents-repo-facefusion/d9710bfa-944c-4fca-8848-67903fe24881/scratchpad/facefusion-camera-format.service /etc/systemd/system/facefusion-camera-format.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now facefusion-camera-format
+systemctl status facefusion-camera-format --no-pager
+v4l2-ctl -d /dev/video11 --get-fmt-video-out
+
+   The last command must show Width/Height 1920/1080 and Pixel Format YU12.
+
+4. Start FaceFusion:
+
+./run.sh run --ui-layouts webcam --execution-thread-count 2 --processors face_swapper --face-swapper-model inswapper_128_fp16 --face-swapper-pixel-boost 128x128
+
+   Press Start in the web UI (mode v4l2, 1920x1080 are already the defaults).
+
+5. In OBS: add a "Video Capture Device (V4L2)" source and pick "FaceFusion Camera".
+   Leave resolution on "Leave Unchanged", it is now 1920x1080.
+
+Useful checks
+-------------
+v4l2-ctl --list-devices                          # shows FaceFusion Camera on /dev/video11
+v4l2-ctl -d /dev/video11 --get-fmt-video-out     # current size and pixel format
+fuser -v /dev/video11                            # who has the device open
+systemctl restart facefusion-camera-format       # re-pin the format (close OBS and FaceFusion first)
+
+To change the resolution later: edit WIDTH/HEIGHT in /usr/local/bin/facefusion-camera-format,
+close OBS and FaceFusion, then: sudo systemctl restart facefusion-camera-format
